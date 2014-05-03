@@ -1,0 +1,85 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>DollarUnity by SteBeeGizmo</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/main.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+  </head>
+  <body>
+
+      <header>
+        <h1>DollarUnity</h1>
+        <p>A Unity-specific implementation of the &quot;$1 Recognizer&quot;</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+
+        <a href="https://github.com/SteBeeGizmo/DollarUnity" class="button fork"><strong>View On GitHub</strong></a>
+        <div class="downloads">
+          <span>Downloads:</span>
+          <ul>
+            <li><a href="https://github.com/SteBeeGizmo/DollarUnity/zipball/master" class="button">ZIP</a></li>
+            <li><a href="https://github.com/SteBeeGizmo/DollarUnity/tarball/master" class="button">TAR</a></li>
+          </ul>
+        </div>
+      </div><!-- end banner -->
+
+    <div class="wrapper">
+      <nav>
+        <ul></ul>
+      </nav>
+      <section>
+        <h2>
+<a name="dollarunity" class="anchor" href="#dollarunity"><span class="octicon octicon-link"></span></a>DollarUnity</h2>
+
+<h4>
+<a name="a-unity-specific-implementation-of-the-1-recognizer" class="anchor" href="#a-unity-specific-implementation-of-the-1-recognizer"><span class="octicon octicon-link"></span></a>A Unity-specific implementation of the "$1 Recognizer"</h4>
+
+<p>The "$1 Recognizer" is a well-known gesture recognizer developed by <a href="http://depts.washington.edu/aimgroup/proj/dollar/">Jacob Wobbrock, Andy Wilson and Yang Li</a>. DollarUnity is an adaptation of their original code to run well in Unity3d projects. Though designed for identifying pen gestures on mobile devices, the $1 Recognizer is actually able to match patterns in any stream of data, provided some preconditions are met:</p>
+
+<ul>
+<li>
+<em>The stream must have a beginning and an end.</em> Dollar is efficient, but it's definitely not trivial, so you don't want to run it every frame. Also, different users will complete gestures in different amounts of time, so unless the user has a way to mark the start and finish, you'd wind up having to run multiple comparisons at once (e.g., testing the last half-second, the last second and the last two seconds of data). For pen and touch gestures, the start is simply when the pen or finger makes contact, and the end is when the contact is broken. For other contexts, you might need to give the user a button to hold down throughout the gesture.</li>
+<li>
+<em>The stream must be continuous.</em> Dollar is a "unistroke recognizer" ("$1" is a playful abbreviation of "unistroke"), which means that there must be no discontinuities in the gesture. It's not a good choice for block letters, which are usually composed of multiple strokes. It can recognize most cursive letters just fine, but it can't distinguish a lower-case I from a lower-case T.</li>
+<li>
+<em>Every gesture produces a match.</em> Dollar works by finding the closest match between the user's input and a pre-defined library of gesture candidates. It thus always reports back <em>a</em> match, even when that "match" is not very close at all. This is another reason why it's important for the user to communicate the intent to make a gesture.</li>
+</ul><h3>
+<a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage</h3>
+
+<ol>
+<li>
+<strong>Create an instance of the DollarRecognizer class.</strong> This is a standard C# class, not a MonoBehaviour, so just instantiate it normally as part of one of your components.</li>
+<li>
+<strong>Initialize the pattern library.</strong> A pattern consists of an arbitrary stream of Vector2 values. You can load this stream any way you like, then pass it to <code>SavePattern(string name, IEnumerable&lt;Vector2&gt; points)</code>. The "name" value is the identifier for this gesture. You can provide multiple patterns for a given gesture, to handle variations. For example, if you want to recognize both clockwise and counter-clockwise circles as the same gesture, you'd provide two variations. Generally a single version of any gesture is sufficient.</li>
+<li>
+<strong>When the user completes a gesture, recognize it.</strong> Pass the points to <code>Recognize(IEnumerable&lt;Vector2&gt; points)</code> to get back a Result object. This object gives you the gesture (as <code>Match.Name</code>), the strength of the match (as <code>Score</code>; higher values are better) and the angle (as <code>Angle</code>, in degrees) relative to the original pattern. That angle value lets you recognize an arrow gesture, for example, and determine which direction the arrow is pointing.</li>
+</ol><h3>
+<a name="backlog" class="anchor" href="#backlog"><span class="octicon octicon-link"></span></a>Backlog</h3>
+
+<ul>
+<li>
+<em>This particular implementation is poor at handling swipes.</em> A "swipe" is just a straight line. The original $1 Recognizer is notoriously poor at handling gestures that are essentially one-dimensional, because the algorithm scales all gestures to fit within the same 2D bounding box; doing so greatly amplifies any noise in 1D gestures. The code as currently implemented here uses Yang Li's subsequent ["Protractor" refinement[(<a href="http://yangl.org/pdf/protractor-chi2010.pdf">http://yangl.org/pdf/protractor-chi2010.pdf</a>) of the $1 Recognizer, but the bounding-box scaling is still present. In theory, simply commenting out line 113 of DollarRecognizer.cs will solve this, but I haven't spent the time to confirm and debug that yet.</li>
+<li>
+<em>Make the code coroutine-friendly.</em> Right now the entire recognition operation is done synchronously, which is of course a poor way to do lengthy, computation-heavy tasks. It'd be easy to create an IEnumerator-returning coroutine version of the code. Note that DollarRecognizer isn't a MonoBehaviour, so you can't actually call <code>StartCoroutine()</code> from within it, but it can have methods that are themselves invoked by coroutines.</li>
+</ul>
+      </section>
+      <footer>
+        <p>Project maintained by <a href="https://github.com/SteBeeGizmo">SteBeeGizmo</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/michigangraham">mattgraham</a></small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    
+  </body>
+</html>
